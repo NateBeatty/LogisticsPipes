@@ -193,7 +193,7 @@ public class ModuleCrafter extends LogisticsGuiModule implements ICraftItems, IH
                 areAllOrderesToBuffer() ? BufferMode.DESTINATION_BUFFERED : BufferMode.NONE);
     }
 
-    public boolean networkHasItemsForCraft(IOrderInfoProvider result) {
+    public boolean networkHasItemsForCraft2(IOrderInfoProvider result) {
         IRouter r = SimpleServiceLocator.routerManager.getRouter(result.getRouterId());
 
         for (int i = 0; i < 9; i++) {
@@ -212,9 +212,34 @@ public class ModuleCrafter extends LogisticsGuiModule implements ICraftItems, IH
             if (currentlyHas + storedInNetwork < itemStack.getStackSize()) {
                 return false;
             }
-
         }
         return true;
+    }
+
+    public boolean networkHasItemsForCraft() {
+        IRouter r = getRouter();
+
+        for (int i = 0; i < 9; i++) {
+            ItemIdentifierStack itemStack = _dummyInventory.getIDStackInSlot(i);
+            if (itemStack == null) {
+                continue;
+            }
+
+            int storedInNetwork = SimpleServiceLocator.logisticsManager.getAvailableItems(r.getIRoutersByCost())
+                    .getOrDefault(itemStack.getItem(), 0);
+
+            if (storedInNetwork < itemStack.getStackSize()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public int getReadilyAvailiable(ItemIdentifier item) {
+        IRouter r = getRouter();
+        int storedInNetwork = SimpleServiceLocator.logisticsManager.getAvailableItems(r.getIRoutersByCost())
+                .getOrDefault(item, 0);
+        return storedInNetwork;
     }
 
     public int currentlyHas(ItemIdentifier item) {
@@ -378,10 +403,28 @@ public class ModuleCrafter extends LogisticsGuiModule implements ICraftItems, IH
 
     private Map<ItemIdentifier, Integer> overflowedItems = new HashMap();
 
+    private Map<ItemIdentifier, Integer> requestableItems = new HashMap();
+
+    public void makeOverflowedItemRequestable(ItemIdentifierStack stack) {
+        UpdateOverflowedItems(stack.getItem(), -1 * stack.getStackSize());
+        UpdateRequestableItems(stack.getItem(), stack.getStackSize());
+    }
+
+    public void setOverflowedAndRequestable(ItemIdentifier item, int stackSize) {
+        int readilyAvailable = getReadilyAvailiable(item);
+        int remainingStackSize = stackSize - readilyAvailable;
+        UpdateOverflowedItems(item, remainingStackSize);
+        UpdateRequestableItems(item, readilyAvailable);
+    }
+
     public boolean requestMoreItems() {
         boolean thisModuleRequests = false;
-        for (ItemIdentifier key : overflowedItems.keySet()) {
-            int amount = Math.min(maxRequest(key), overflowedItems.get(key));
+        if (!networkHasItemsForCraft()) {
+            return false;
+        }
+
+        for (ItemIdentifier key : requestableItems.keySet()) {
+            int amount = Math.min(maxRequest(key), requestableItems.get(key));
             ItemIdentifierStack newRequest = new ItemIdentifierStack(key, amount);
             IAdditionalTargetInformation info = new ChassiTargetInformation(getPositionInt());
 
@@ -392,13 +435,31 @@ public class ModuleCrafter extends LogisticsGuiModule implements ICraftItems, IH
                 System.out.println("Request error");
             } else {
                 RequestTree.requestPartial(newRequest, (CoreRoutedPipe) _service, info);
-                UpdateOverflowedItems(key, -1 * amount);
+                UpdateRequestableItems(key, -1 * amount);
                 // System.out.println("Requesting new batch: " + " | " + key.getFriendlyName() + " | " + amount);
                 thisModuleRequests = true;
             }
 
         }
         return thisModuleRequests;
+    }
+
+    public void requestCraft() {
+        for (int i = 0; i < 9; i++) {
+            ItemIdentifierStack itemStack = _dummyInventory.getIDStackInSlot(i).clone();
+            IAdditionalTargetInformation info = new ChassiTargetInformation(getPositionInt());
+            RequestTree.requestPartial(itemStack, (CoreRoutedPipe) _service, info);
+        }
+    }
+
+    public boolean requestMoreItems2() {
+        boolean thisModuleRequests = false;
+        if (requestableItems.isEmpty() || !networkHasItemsForCraft()) {
+            return false;
+        }
+        requestCraft();
+        return false;
+
     }
 
     public void UpdateOverflowedItems(ItemIdentifierStack stack) {
@@ -421,6 +482,27 @@ public class ModuleCrafter extends LogisticsGuiModule implements ICraftItems, IH
             overflowedItems.remove(item);
         } else {
             overflowedItems.put(item, amount);
+        }
+    }
+
+    public void UpdateRequestableItems(ItemIdentifierStack stack) {
+        UpdateRequestableItems(stack.getItem(), stack.getStackSize());
+    }
+
+    public void UpdateRequestableItems(ItemIdentifier stack, int stackSize) {
+        int oldAmount = getRequestableItemCount(stack);
+        setRequestableItems(stack, oldAmount + stackSize);
+    }
+
+    private int getRequestableItemCount(ItemIdentifier item) {
+        return requestableItems.getOrDefault(item, 0);
+    }
+
+    private void setRequestableItems(ItemIdentifier item, int amount) {
+        if (amount == 0 && requestableItems.containsKey(item)) {
+            requestableItems.remove(item);
+        } else {
+            requestableItems.put(item, amount);
         }
     }
 

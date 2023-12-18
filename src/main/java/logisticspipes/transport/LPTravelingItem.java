@@ -184,11 +184,11 @@ public abstract class LPTravelingItem {
         }
 
         public boolean getIsLostItem() {
-            return isLostItem;
+            return info.isLostItem;
         }
 
         public void setIsLostItem(boolean bool) {
-            isLostItem = bool;
+            info.isLostItem = bool;
         }
 
         @Override

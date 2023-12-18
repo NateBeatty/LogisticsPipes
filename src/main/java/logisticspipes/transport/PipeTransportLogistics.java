@@ -484,8 +484,9 @@ public class PipeTransportLogistics {
         ModuleCrafter craftingModule = ((ModuleCrafter) ((PipeLogisticsChassi) r.getPipe()).getModules()
                 .getModule(moduleSlot));
 
-        craftingModule.UpdateOverflowedItems(item.getItemIdentifierStack());
+        craftingModule.makeOverflowedItemRequestable(item.getItemIdentifierStack());
         craftingModule.requestMoreItems();
+
     }
 
     protected void handleTileReachedServer(LPTravelingItemServer arrivingItem, TileEntity tile, ForgeDirection dir) {
@@ -531,7 +532,7 @@ public class PipeTransportLogistics {
         } else if (tile instanceof IInventory && isRouted) {
             System.out.println("Tz09");
 
-            handleCaseLostCraftingModuleItem(arrivingItem);
+            // handleCaseLostCraftingModuleItem(arrivingItem);
 
             getRoutedPipe().getCacheHolder().trigger(CacheTypes.Inventory);
 
@@ -623,11 +624,13 @@ public class PipeTransportLogistics {
                         // For InvSysCon
                         info.getItem().setStackSize(added.stackSize);
                         insertedItemStack(info, tile);
+                        // handleCaseLostCraftingModuleItem(arrivingItem);
                     } else {
                         info = arrivingItem.getInfo();
                         info.getItem().setStackSize(added.stackSize);
                         // For InvSysCon
                         insertedItemStack(info, tile);
+                        // handleCaseLostCraftingModuleItem(arrivingItem);
 
                         // back to normal code, break if we've inserted everything, all items disposed of.
                         return; // every item has been inserted.
@@ -653,11 +656,14 @@ public class PipeTransportLogistics {
                             // For InvSysCon
                             info.getItem().setStackSize(added.stackSize);
                             insertedItemStack(info, tile);
+                            // handleCaseLostCraftingModuleItem(arrivingItem);
+
                         } else {
                             info = arrivingItem.getInfo();
                             info.getItem().setStackSize(added.stackSize);
                             // For InvSysCon
                             insertedItemStack(info, tile);
+                            // handleCaseLostCraftingModuleItem(arrivingItem);
                             // back to normal code, break if we've inserted everything, all items disposed of.
                             return; // every item has been inserted.
                         }
@@ -690,7 +696,9 @@ public class PipeTransportLogistics {
     }
 
     protected void insertedItemStack(ItemRoutingInformation info, TileEntity tile) {
-        // handleCaseLostCraftingModuleItem((IRoutedItem)(info));
+        System.out.println("Tz091");
+        handleCaseLostCraftingModuleItem(new LPTravelingItemServer(info));
+
     }
 
     public boolean canPipeConnect(TileEntity tile, ForgeDirection side) {

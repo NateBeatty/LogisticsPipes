@@ -221,8 +221,6 @@ public class RequestTreeNode {
             ModuleCrafter craftingModule = ((ModuleCrafter) ((PipeLogisticsChassi) r.getPipe()).getModules()
                     .getModule(moduleSlot));
 
-            craftingModule.networkHasItemsForCraft(result);
-
             int maxRequest = craftingModule.maxRequest(result.getAsDisplayItem().getItem());
             int stackSize = result.getAsDisplayItem().getStackSize();
             System.out.println("Evaluating: " + stackSize + " | " + maxRequest);
@@ -242,7 +240,7 @@ public class RequestTreeNode {
                         result.getAsDisplayItem().getItem(),
                         remainingStackSize);
 
-                craftingModule.UpdateOverflowedItems(result.getAsDisplayItem().getItem(), remainingStackSize);
+                craftingModule.setOverflowedAndRequestable(result.getAsDisplayItem().getItem(), remainingStackSize);
                 // craftingModule.itemLost(remainingStack, info);
             }
         }
@@ -282,10 +280,10 @@ public class RequestTreeNode {
                         ((PipeLogisticsChassi) (r).getPipe()).usingCraftingModuleSlot = moduleSlot;
                         handleCraftingModule(result);
                     } else {
-                        // int moduleSlot = ((ModuleCrafter.CraftingChassieInformation) info).getModuleSlot();
                         ModuleCrafter craftingModule = ((ModuleCrafter) ((PipeLogisticsChassi) r.getPipe()).getModules()
                                 .getModule(moduleSlot));
                         craftingModule.UpdateOverflowedItems(result.getAsDisplayItem());
+
                         result = null;
                     }
                 }

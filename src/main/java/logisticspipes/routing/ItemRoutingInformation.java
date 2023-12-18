@@ -41,9 +41,12 @@ public class ItemRoutingInformation {
         that.tracker = tracker;
         that.targetInfo = targetInfo;
         that.sourceInfo = sourceInfo;
+        that.isLostItem = isLostItem;
         that.item = getItem().clone();
         return that;
     }
+
+    public boolean isLostItem = false;
 
     public int sourceRouterID = -1;
 
