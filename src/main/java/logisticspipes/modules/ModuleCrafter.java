@@ -287,18 +287,10 @@ public class ModuleCrafter extends LogisticsGuiModule implements ICraftItems, IH
         int b = _service.countOnRoute(item);
         int c = _service.getRouter().getPipe().getPendingRouting(item);
         // int d = _service.getr
-        System.out.println(
-                "Routing : " + x
-                        + " | "
-                        + a
-                        + " | "
-                        + b
-                        + " | "
-                        + c
-                        + " | "
-                        + (x - a - b - c)
-                        + " | "
-                        + item.getFriendlyName());
+        /*
+         * System.out.println( "Routing : " + x + " | " + a + " | " + b + " | " + c + " | " + (x - a - b - c) + " | " +
+         * item.getFriendlyName());
+         */
         return x - a - b - c;
     }
 
@@ -411,7 +403,7 @@ public class ModuleCrafter extends LogisticsGuiModule implements ICraftItems, IH
     }
 
     public void setOverflowedAndRequestable(ItemIdentifier item, int stackSize) {
-        int readilyAvailable = getReadilyAvailiable(item);
+        int readilyAvailable = Math.min(getReadilyAvailiable(item), stackSize);
         int remainingStackSize = stackSize - readilyAvailable;
         UpdateOverflowedItems(item, remainingStackSize);
         UpdateRequestableItems(item, readilyAvailable);

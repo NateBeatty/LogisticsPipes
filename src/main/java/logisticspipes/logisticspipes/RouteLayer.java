@@ -106,10 +106,10 @@ public class RouteLayer {
             item.setArrived(true);
 
             if (item.getAdditionalTargetInformation() instanceof ModuleCrafter.CraftingChassieInformation) {
-                System.out.println("Arrivedc: " + item.getInfo().destinationint + " " + item.getDestination());
+                // System.out.println("Arrivedc: " + item.getInfo().destinationint + " " + item.getDestination());
 
             } else {
-                System.out.println("Arrived: " + item.getInfo().destinationint + " " + item.getDestination());
+                // System.out.println("Arrived: " + item.getInfo().destinationint + " " + item.getDestination());
 
                 // handleCaseLostCraftingModuleItem(item);
 
