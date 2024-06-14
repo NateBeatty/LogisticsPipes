@@ -398,6 +398,7 @@ public class ModuleCrafter extends LogisticsGuiModule implements ICraftItems, IH
     private Map<ItemIdentifier, Integer> requestableItems = new HashMap();
 
     public void makeOverflowedItemRequestable(ItemIdentifierStack stack) {
+        System.out.println("making overflowed items requestable");
         UpdateOverflowedItems(stack.getItem(), -1 * stack.getStackSize());
         UpdateRequestableItems(stack.getItem(), stack.getStackSize());
     }
@@ -428,7 +429,7 @@ public class ModuleCrafter extends LogisticsGuiModule implements ICraftItems, IH
             } else {
                 RequestTree.requestPartial(newRequest, (CoreRoutedPipe) _service, info);
                 UpdateRequestableItems(key, -1 * amount);
-                // System.out.println("Requesting new batch: " + " | " + key.getFriendlyName() + " | " + amount);
+                System.out.println("Requesting new batch: " + " | " + key.getFriendlyName() + " | " + amount);
                 thisModuleRequests = true;
             }
 
@@ -452,6 +453,17 @@ public class ModuleCrafter extends LogisticsGuiModule implements ICraftItems, IH
         requestCraft();
         return false;
 
+    }
+
+    public void sendItemToStorage(ItemIdentifierStack item) {
+        List<Integer> jamList = new LinkedList<>();
+        ItemIdentifier itemIdentifier = item.getItem();
+        Pair<Integer, SinkReply> reply = _service.hasDestination(itemIdentifier, true, jamList);
+        if (reply == null) {
+            return;
+        }
+        ItemStack stackToSend = item.makeNormalStack();
+        _service.sendStack(stackToSend, reply, ItemSendMode.Normal);
     }
 
     public void UpdateOverflowedItems(ItemIdentifierStack stack) {
@@ -1554,6 +1566,7 @@ public class ModuleCrafter extends LogisticsGuiModule implements ICraftItems, IH
         int stacksleft = stacksToExtract();
         while (itemsleft > 0 && stacksleft > 0
                 && (_service.getItemOrderManager().hasOrders(ResourceType.CRAFTING, ResourceType.EXTRA))) {
+            System.out.println("CRAFTING IN SESSION!");
             LogisticsItemOrder nextOrder = _service.getItemOrderManager()
                     .peekAtTopRequest(ResourceType.CRAFTING, ResourceType.EXTRA); // fetch but not remove.
             int maxtosend = Math.min(itemsleft, nextOrder.getResource().stack.getStackSize());
@@ -1576,6 +1589,7 @@ public class ModuleCrafter extends LogisticsGuiModule implements ICraftItems, IH
             lastAccessedCrafter = new WeakReference<>(tile.tile);
             // send the new crafted items to the destination
             ItemIdentifier extractedID = ItemIdentifier.get(extracted);
+            System.out.println("numtosend2: " + extractedID.getFriendlyName());
             while (extracted.stackSize > 0) {
                 if (!doesExtractionMatch(nextOrder, extractedID)) {
                     LogisticsItemOrder startOrder = nextOrder;
@@ -1595,13 +1609,15 @@ public class ModuleCrafter extends LogisticsGuiModule implements ICraftItems, IH
                         itemsleft -= numtosend;
                         ItemStack stackToSend = extracted.splitStack(numtosend);
                         // Route the unhandled item
-
+                        System.out.println("numtosend1: " + stackToSend.stackSize);
                         _service.sendStack(stackToSend, -1, ItemSendMode.Normal, null);
+
                         continue;
                     }
                 }
                 int numtosend = Math.min(extracted.stackSize, extractedID.getMaxStackSize());
                 numtosend = Math.min(numtosend, nextOrder.getResource().stack.getStackSize());
+                System.out.println("numtosend: " + numtosend);
                 if (numtosend == 0) {
                     break;
                 }
@@ -1634,8 +1650,11 @@ public class ModuleCrafter extends LogisticsGuiModule implements ICraftItems, IH
                             .peekAtTopRequest(ResourceType.CRAFTING, ResourceType.EXTRA); // fetch but not remove.
                 }
                 PipeLogisticsChassi pipe = ((PipeLogisticsChassi) (_service.getRouter().getPipe()));
-                pipe.currentCraftingAmount -= extracted.stackSize;
+
+                pipe.currentCraftingAmount -= _dummyInventory.getIDStackInSlot(0).getStackSize();
+                System.out.println("C amount: " + pipe.currentCraftingAmount);
                 if (!requestMoreItems() && pipe.currentCraftingAmount == 0) {
+
                     pipe.requestModulesOverflowedItems();
                 }
             }
@@ -1679,7 +1698,9 @@ public class ModuleCrafter extends LogisticsGuiModule implements ICraftItems, IH
     }
 
     private ItemStack extract(AdjacentTile tile, IResource item, int amount) {
+        System.out.println("Attempting to extract: " + item.getAsItem().getFriendlyName() + " " + amount);
         if (tile.tile instanceof LogisticsCraftingTableTileEntity) {
+            System.out.println("Attempting to extract5: " + item.getAsItem().getFriendlyName());
             return extractFromLogisticsCraftingTable(
                     (LogisticsCraftingTableTileEntity) tile.tile,
                     item,
@@ -1690,10 +1711,14 @@ public class ModuleCrafter extends LogisticsGuiModule implements ICraftItems, IH
                     (net.minecraft.inventory.ISidedInventory) tile.tile,
                     ForgeDirection.UNKNOWN,
                     true);
+            System.out.println("Attempting to extract4: " + item.getAsItem().getFriendlyName());
             return extractFromIInventory(sidedadapter, item, amount, tile.orientation);
+
         } else if (tile.tile instanceof IInventory) {
+            System.out.println("Attempting to extract3: " + item.getAsItem().getFriendlyName());
             return extractFromIInventory((IInventory) tile.tile, item, amount, tile.orientation);
         }
+        System.out.println("Attempting to extract2: " + item.getAsItem().getFriendlyName());
         return null;
     }
 
@@ -1737,7 +1762,9 @@ public class ModuleCrafter extends LogisticsGuiModule implements ICraftItems, IH
             }
             itemToExtract = toExtract;
         }
+
         int available = invUtil.itemCount(itemToExtract);
+        System.out.println("Attempting to extract 6: " + itemToExtract.getFriendlyName() + available + count);
         if (available == 0) {
             return null;
         }
@@ -1784,6 +1811,7 @@ public class ModuleCrafter extends LogisticsGuiModule implements ICraftItems, IH
                 }
             }
         }
+        System.out.println("Finding item: " + wanteditem.getFriendlyName());
         if (wanteditem == null) {
             return null;
         }

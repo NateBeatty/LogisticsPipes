@@ -154,6 +154,7 @@ public class ModuleExtractor extends LogisticsSneakyDirectionModule
             if (slot == null) {
                 continue;
             }
+            // x
             ItemIdentifier slotitem = ItemIdentifier.get(slot);
             List<Integer> jamList = new LinkedList<>();
             Pair<Integer, SinkReply> reply = _service.hasDestination(slotitem, true, jamList);
@@ -196,6 +197,7 @@ public class ModuleExtractor extends LogisticsSneakyDirectionModule
                 reply = _service.hasDestination(ItemIdentifier.get(slot), true, jamList);
             }
             break;
+            // z
         }
     }
 

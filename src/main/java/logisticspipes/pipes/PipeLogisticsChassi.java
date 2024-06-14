@@ -95,19 +95,21 @@ public abstract class PipeLogisticsChassi extends CoreRoutedPipe
 
     public int usingCraftingModuleSlot = -1;
 
-    public int currentCraftingAmount;
+    public int currentCraftingAmount; // corresponds to # of items in recipe for 0th slot
 
     public void requestModulesOverflowedItems() {
         boolean requested = false;
         for (int i = 0; i < getChassiSize(); i++) {
-            // getModuleInSlot(i)?
             if (getModules().getModule(i) instanceof ModuleCrafter) {
                 requested = ((ModuleCrafter) getModules().getModule(i)).requestMoreItems();
+                usingCraftingModuleSlot = i;
             }
             if (requested) {
                 return;
             }
         }
+        System.out.println("more items");
+        usingCraftingModuleSlot = -1;
     }
 
     private final ChassiModule _module;
