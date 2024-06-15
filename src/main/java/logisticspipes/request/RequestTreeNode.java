@@ -219,6 +219,7 @@ public class RequestTreeNode {
                 .getModule(moduleSlot));
         int maxRequest = craftingModule.maxRequest(result.getAsDisplayItem().getItem());
         int stackSize = result.getAsDisplayItem().getStackSize();
+        ((PipeLogisticsChassi) (r).getPipe()).currentCraftingAmount += stackSize;
         System.out.println("Evaluating: " + stackSize + " | " + maxRequest);
 
         r.getPipe().UpdatePendingRouting(
@@ -226,7 +227,6 @@ public class RequestTreeNode {
                 Math.min(maxRequest, stackSize),
                 r.getPipe().getRouterId());
 
-        ((PipeLogisticsChassi) (r).getPipe()).currentCraftingAmount += stackSize;
         if (stackSize > maxRequest) {
             int remainingStackSize = stackSize - maxRequest;
 

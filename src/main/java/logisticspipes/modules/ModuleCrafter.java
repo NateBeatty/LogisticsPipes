@@ -239,6 +239,7 @@ public class ModuleCrafter extends LogisticsGuiModule implements ICraftItems, IH
         IRouter r = getRouter();
         int storedInNetwork = SimpleServiceLocator.logisticsManager.getAvailableItems(r.getIRoutersByCost())
                 .getOrDefault(item, 0);
+        System.out.println("Network has: " + storedInNetwork);
         return storedInNetwork;
     }
 
@@ -411,12 +412,14 @@ public class ModuleCrafter extends LogisticsGuiModule implements ICraftItems, IH
     }
 
     public boolean requestMoreItems() {
+        System.out.println("Attempting to request more items");
         boolean thisModuleRequests = false;
         if (!networkHasItemsForCraft()) {
             return false;
         }
 
         for (ItemIdentifier key : requestableItems.keySet()) {
+            System.out.println("key: " + key.getFriendlyName() + " | value: " + requestableItems.get(key));
             int amount = Math.min(maxRequest(key), requestableItems.get(key));
             PipeLogisticsChassi pipe = ((PipeLogisticsChassi) (_service.getRouter().getPipe()));
             ItemIdentifierStack newRequest = new ItemIdentifierStack(key, amount);
