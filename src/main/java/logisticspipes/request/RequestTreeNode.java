@@ -228,6 +228,7 @@ public class RequestTreeNode {
 
         if (stackSize > maxRequest) {
             int remainingStackSize = stackSize - maxRequest;
+            ((PipeLogisticsChassi) (r).getPipe()).currentCraftingAmount += maxRequest;
             result.getAsDisplayItem().setStackSize(maxRequest);
 
             ItemIdentifierStack remainingStack = new ItemIdentifierStack(
@@ -235,6 +236,8 @@ public class RequestTreeNode {
                     remainingStackSize);
 
             craftingModule.setOverflowedAndRequestable(result.getAsDisplayItem().getItem(), remainingStackSize);
+        } else {
+            ((PipeLogisticsChassi) (r).getPipe()).currentCraftingAmount += stackSize;
         }
 
     }
@@ -283,7 +286,6 @@ public class RequestTreeNode {
                                 .getItem();
 
                         int amount = result.getAsDisplayItem().getStackSize();
-                        ((PipeLogisticsChassi) (r).getPipe()).currentCraftingAmount += amount;
 
                         if (craftingModule != null) {
                             System.out.println("Output item? " + craftingModule.getCraftedItem().getFriendlyName());
@@ -294,6 +296,12 @@ public class RequestTreeNode {
                                                                                                                  // this
                                                                                                                  // is
                                                                                                                  // for
+                                                                                                                 // (MAYBE
+                                                                                                                 // for
+                                                                                                                 // same
+                                                                                                                 // items
+                                                                                                                 // but
+                                                                                                                 // typo?)
                             System.out.println("Increasing Stack Size");
 
                             System.out.println("Increasing C by: " + amount);
@@ -315,7 +323,7 @@ public class RequestTreeNode {
                                 .getModule(moduleSlot));
                         craftingModule.UpdateOverflowedItems(result.getAsDisplayItem());
                         int amount = result.getAsDisplayItem().getStackSize();
-                        ((PipeLogisticsChassi) (r).getPipe()).currentCraftingAmount += amount;
+                        // ((PipeLogisticsChassi) (r).getPipe()).currentCraftingAmount += amount;
                         System.out.println("Increasing C by: " + amount);
                         // result.getAsDisplayItem().setStackSize(0); //Problem
                         // result = null;
