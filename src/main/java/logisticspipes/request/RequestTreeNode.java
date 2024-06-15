@@ -22,7 +22,6 @@ import logisticspipes.routing.order.IOrderInfoProvider;
 import logisticspipes.routing.order.IOrderInfoProvider.ResourceType;
 import logisticspipes.routing.order.LinkedLogisticsOrderList;
 import logisticspipes.routing.order.LogisticsOrderManager;
-import logisticspipes.utils.item.ItemIdentifier;
 import logisticspipes.utils.item.ItemIdentifierStack;
 import logisticspipes.utils.tuples.Pair;
 import lombok.Getter;
@@ -213,51 +212,51 @@ public class RequestTreeNode {
 
     private void handleCraftingModule(IOrderInfoProvider result) {
         int moduleSlot = ((ModuleCrafter.CraftingChassieInformation) info).getModuleSlot();
+        System.out.println("IS CRAFTING REQUEST!");
         IRouter r = SimpleServiceLocator.routerManager.getRouter(result.getRouterId());
 
-        ModuleCrafter craftingModule = ((ModuleCrafter) ((PipeLogisticsChassi) r.getPipe()).getModules()
-                .getModule(moduleSlot));
-        int maxRequest = craftingModule.maxRequest(result.getAsDisplayItem().getItem());
-        int stackSize = result.getAsDisplayItem().getStackSize();
-        ((PipeLogisticsChassi) (r).getPipe()).currentCraftingAmount += stackSize;
-        System.out.println("Evaluating: " + stackSize + " | " + maxRequest);
+        String itemName = result.getAsDisplayItem().getFriendlyName();
 
-        r.getPipe().UpdatePendingRouting(
-                result.getAsDisplayItem().getItem(),
-                Math.min(maxRequest, stackSize),
-                r.getPipe().getRouterId());
+        if (r.getPipe() instanceof PipeLogisticsChassi) {
+            ModuleCrafter craftingModule = ((ModuleCrafter) ((PipeLogisticsChassi) r.getPipe()).getModules()
+                    .getModule(moduleSlot));
 
-        if (stackSize > maxRequest) {
-            int remainingStackSize = stackSize - maxRequest;
+            int maxRequest = craftingModule.maxRequest(result.getAsDisplayItem().getItem());
+            int stackSize = result.getAsDisplayItem().getStackSize();
+            System.out.println("Evaluating: " + stackSize + " | " + maxRequest);
 
-            result.getAsDisplayItem().setStackSize(maxRequest);
-
-            ItemIdentifierStack remainingStack = new ItemIdentifierStack(
+            r.getPipe().UpdatePendingRouting(
                     result.getAsDisplayItem().getItem(),
-                    remainingStackSize);
+                    Math.min(maxRequest, stackSize),
+                    r.getPipe().getRouterId());
 
-            craftingModule.setOverflowedAndRequestable(result.getAsDisplayItem().getItem(), remainingStackSize);
+            if (stackSize > maxRequest) {
+                int remainingStackSize = stackSize - maxRequest;
+                System.out.println("Setting result stack size to: " + maxRequest);
+                result.getAsDisplayItem().setStackSize(maxRequest);
+
+                System.out.println("Remaining Stack: " + remainingStackSize);
+                ItemIdentifierStack remainingStack = new ItemIdentifierStack(
+                        result.getAsDisplayItem().getItem(),
+                        remainingStackSize);
+
+                craftingModule.setOverflowedAndRequestable(result.getAsDisplayItem().getItem(), remainingStackSize);
+                // craftingModule.itemLost(remainingStack, info);
+            }
         }
-
     }
 
     boolean canBlockAcceptCraftingOrder(IOrderInfoProvider orderResutlt, int moduleSlot) {
-        System.out.println("Accept? " + orderResutlt.getAsDisplayItem());
         IRouter r = SimpleServiceLocator.routerManager.getRouter(orderResutlt.getRouterId());
         PipeLogisticsChassi pipe = (PipeLogisticsChassi) (r.getPipe());
         if (pipe.currentCraftingAmount == 0) {
-            System.out.println("Current Crafting Amount is 0");
             return true;
         }
-
         boolean condition1 = orderResutlt.getAsDisplayItem().getItem() == pipe.currentCraftingItem;
         boolean condition2 = (pipe.usingCraftingModuleSlot == moduleSlot);
-        ModuleCrafter craftingModule = ((ModuleCrafter) ((PipeLogisticsChassi) r.getPipe()).getModules()
-                .getModule(moduleSlot));
-        ItemIdentifier moduleZeroSlot = craftingModule.getDummyInventory().getIDStackInSlot(0).getItem();
-
         if (condition2) {
-            System.out.println("Using module slot: " + moduleSlot);
+            int amount = orderResutlt.getAsDisplayItem().getStackSize();
+            pipe.currentCraftingAmount += amount;
             return true;
         }
         return false;
@@ -272,65 +271,23 @@ public class RequestTreeNode {
             IOrderInfoProvider result = promise.fullFill(requestType, info);
 
             if (result != null) {
-
                 if (info instanceof ModuleCrafter.CraftingChassieInformation) {
-                    System.out.println("CCI: " + result.getAsDisplayItem().getFriendlyName());
                     int moduleSlot = ((ModuleCrafter.CraftingChassieInformation) (info)).getModuleSlot();
                     IRouter r = SimpleServiceLocator.routerManager.getRouter(result.getRouterId());
-
                     if (r.getPipe() instanceof PipeLogisticsChassi && canBlockAcceptCraftingOrder(result, moduleSlot)) {
-                        ModuleCrafter craftingModule = ((ModuleCrafter) ((PipeLogisticsChassi) r.getPipe()).getModules()
-                                .getModule(moduleSlot));
-                        ItemIdentifier moduleZeroSlot = craftingModule.getDummyInventory().getIDStackInSlot(0)
-                                .getItem();
-
-                        int amount = result.getAsDisplayItem().getStackSize();
-
-                        if (craftingModule != null) {
-                            System.out.println("Output item? " + craftingModule.getCraftedItem().getFriendlyName());
-                        }
-
-                        if (moduleZeroSlot != null && (result.getAsDisplayItem().getItem() == moduleZeroSlot)) { // idk
-                                                                                                                 // what
-                                                                                                                 // this
-                                                                                                                 // is
-                                                                                                                 // for
-                                                                                                                 // (MAYBE
-                                                                                                                 // for
-                                                                                                                 // same
-                                                                                                                 // items
-                                                                                                                 // but
-                                                                                                                 // typo?)
-                            System.out.println("Increasing Stack Size");
-
-                            System.out.println("Increasing C by: " + amount);
-                            System.out.println("Amount: " + amount);
-                        } else {
-                            System.out.println(
-                                    "sad: " + result.getAsDisplayItem().getItem().getFriendlyName()
-                                            + " | "
-                                            + moduleZeroSlot.getFriendlyName());
-                        }
-
                         // ((PipeLogisticsChassi) (r).getPipe()).currentCraftingItem =
                         // result.getAsDisplayItem().getItem();
                         ((PipeLogisticsChassi) (r).getPipe()).usingCraftingModuleSlot = moduleSlot;
                         handleCraftingModule(result);
-                    } else if (r.getPipe() instanceof PipeLogisticsChassi) {
-                        System.out.println("else " + result.getAsDisplayItem().getFriendlyName());
+                    } else {
                         ModuleCrafter craftingModule = ((ModuleCrafter) ((PipeLogisticsChassi) r.getPipe()).getModules()
                                 .getModule(moduleSlot));
                         craftingModule.UpdateOverflowedItems(result.getAsDisplayItem());
-                        int amount = result.getAsDisplayItem().getStackSize();
-                        // ((PipeLogisticsChassi) (r).getPipe()).currentCraftingAmount += amount;
-                        System.out.println("Increasing C by: " + amount);
-                        // result.getAsDisplayItem().setStackSize(0); //Problem
-                        // result = null;
+
+                        result = null;
                     }
                 }
                 if (result != null) {
-                    System.out.println("result not null: " + result.getAsDisplayItem().getFriendlyName());
-                    System.out.println("Stack size: " + result.getAsDisplayItem().getStackSize());
                     list.add(result);
                 }
             }
