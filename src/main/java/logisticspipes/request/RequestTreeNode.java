@@ -226,9 +226,10 @@ public class RequestTreeNode {
                 Math.min(maxRequest, stackSize),
                 r.getPipe().getRouterId());
 
+        ((PipeLogisticsChassi) (r).getPipe()).currentCraftingAmount += stackSize;
         if (stackSize > maxRequest) {
             int remainingStackSize = stackSize - maxRequest;
-            ((PipeLogisticsChassi) (r).getPipe()).currentCraftingAmount += maxRequest;
+
             result.getAsDisplayItem().setStackSize(maxRequest);
 
             ItemIdentifierStack remainingStack = new ItemIdentifierStack(
@@ -236,8 +237,6 @@ public class RequestTreeNode {
                     remainingStackSize);
 
             craftingModule.setOverflowedAndRequestable(result.getAsDisplayItem().getItem(), remainingStackSize);
-        } else {
-            ((PipeLogisticsChassi) (r).getPipe()).currentCraftingAmount += stackSize;
         }
 
     }

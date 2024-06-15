@@ -419,7 +419,6 @@ public class ModuleCrafter extends LogisticsGuiModule implements ICraftItems, IH
         for (ItemIdentifier key : requestableItems.keySet()) {
             int amount = Math.min(maxRequest(key), requestableItems.get(key));
             PipeLogisticsChassi pipe = ((PipeLogisticsChassi) (_service.getRouter().getPipe()));
-            pipe.currentCraftingAmount += amount;
             ItemIdentifierStack newRequest = new ItemIdentifierStack(key, amount);
             IAdditionalTargetInformation info = new ChassiTargetInformation(getPositionInt());
 
