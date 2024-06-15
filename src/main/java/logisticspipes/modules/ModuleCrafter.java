@@ -1571,6 +1571,13 @@ public class ModuleCrafter extends LogisticsGuiModule implements ICraftItems, IH
                     .peekAtTopRequest(ResourceType.CRAFTING, ResourceType.EXTRA); // fetch but not remove.
             int maxtosend = Math.min(itemsleft, nextOrder.getResource().stack.getStackSize());
             maxtosend = Math.min(nextOrder.getResource().getItem().getMaxStackSize(), maxtosend);
+
+            System.out.println(
+                    "Max to send: " + maxtosend
+                            + " | "
+                            + itemsleft
+                            + " | "
+                            + nextOrder.getResource().stack.getFriendlyName());
             // retrieve the new crafted items
             ItemStack extracted = null;
             AdjacentTile tile = null;
@@ -1651,7 +1658,9 @@ public class ModuleCrafter extends LogisticsGuiModule implements ICraftItems, IH
                 }
                 PipeLogisticsChassi pipe = ((PipeLogisticsChassi) (_service.getRouter().getPipe()));
 
-                pipe.currentCraftingAmount -= _dummyInventory.getIDStackInSlot(0).getStackSize();
+                // pipe.currentCraftingAmount -= _dummyInventory.getIDStackInSlot(0).getStackSize();
+                pipe.currentCraftingAmount -= extracted.stackSize;
+
                 System.out.println("C amount: " + pipe.currentCraftingAmount);
                 if (!requestMoreItems() && pipe.currentCraftingAmount == 0) {
 

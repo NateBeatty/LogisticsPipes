@@ -270,6 +270,7 @@ public class RequestTreeNode {
             IOrderInfoProvider result = promise.fullFill(requestType, info);
 
             if (result != null) {
+
                 if (info instanceof ModuleCrafter.CraftingChassieInformation) {
                     System.out.println("CCI: " + result.getAsDisplayItem().getFriendlyName());
                     int moduleSlot = ((ModuleCrafter.CraftingChassieInformation) (info)).getModuleSlot();
@@ -280,10 +281,22 @@ public class RequestTreeNode {
                                 .getModule(moduleSlot));
                         ItemIdentifier moduleZeroSlot = craftingModule.getDummyInventory().getIDStackInSlot(0)
                                 .getItem();
-                        if (moduleZeroSlot != null && (result.getAsDisplayItem().getItem() == moduleZeroSlot)) {
+
+                        int amount = result.getAsDisplayItem().getStackSize();
+                        ((PipeLogisticsChassi) (r).getPipe()).currentCraftingAmount += amount;
+
+                        if (craftingModule != null) {
+                            System.out.println("Output item? " + craftingModule.getCraftedItem().getFriendlyName());
+                        }
+
+                        if (moduleZeroSlot != null && (result.getAsDisplayItem().getItem() == moduleZeroSlot)) { // idk
+                                                                                                                 // what
+                                                                                                                 // this
+                                                                                                                 // is
+                                                                                                                 // for
                             System.out.println("Increasing Stack Size");
-                            int amount = result.getAsDisplayItem().getStackSize();
-                            ((PipeLogisticsChassi) (r).getPipe()).currentCraftingAmount += amount;
+
+                            System.out.println("Increasing C by: " + amount);
                             System.out.println("Amount: " + amount);
                         } else {
                             System.out.println(
@@ -301,7 +314,10 @@ public class RequestTreeNode {
                         ModuleCrafter craftingModule = ((ModuleCrafter) ((PipeLogisticsChassi) r.getPipe()).getModules()
                                 .getModule(moduleSlot));
                         craftingModule.UpdateOverflowedItems(result.getAsDisplayItem());
-                        result.getAsDisplayItem().setStackSize(0);
+                        int amount = result.getAsDisplayItem().getStackSize();
+                        ((PipeLogisticsChassi) (r).getPipe()).currentCraftingAmount += amount;
+                        System.out.println("Increasing C by: " + amount);
+                        // result.getAsDisplayItem().setStackSize(0); //Problem
                         // result = null;
                     }
                 }
