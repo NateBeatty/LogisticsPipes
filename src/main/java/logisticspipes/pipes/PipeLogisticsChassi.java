@@ -95,7 +95,11 @@ public abstract class PipeLogisticsChassi extends CoreRoutedPipe
 
     public int usingCraftingModuleSlot = -1;
 
-    public int currentCraftingAmount; // corresponds to # of items in recipe for 0th slot
+    public int currentCraftingAmount; // amount of 1 recipe
+
+    public int currentBulkCraftingAmount; // corresponds to current craft but is maxxed at one stack (requests
+                                          // additional
+                                          // in bulk)
 
     public void requestModulesOverflowedItems() {
         boolean requested = false;
@@ -108,8 +112,6 @@ public abstract class PipeLogisticsChassi extends CoreRoutedPipe
                 return;
             }
         }
-        System.out.println("more items");
-        usingCraftingModuleSlot = -1;
     }
 
     private final ChassiModule _module;

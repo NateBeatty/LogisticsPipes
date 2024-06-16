@@ -394,9 +394,11 @@ public class ModuleCrafter extends LogisticsGuiModule implements ICraftItems, IH
 
     // private Map<ItemIdentifier, Pair<Integer, IAdditionalTargetInformation>> overflowedItems = new HashMap();
 
-    private Map<ItemIdentifier, Integer> overflowedItems = new HashMap();
+    private Map<ItemIdentifier, Integer> overflowedItems = new HashMap<>();
 
-    private Map<ItemIdentifier, Integer> requestableItems = new HashMap();
+    private Map<ItemIdentifier, Integer> requestableItems = new HashMap<>();
+
+    private Map<ItemIdentifier, Integer> requestableItems2 = new HashMap<>();
 
     public void makeOverflowedItemRequestable(ItemIdentifierStack stack) {
         System.out.println("making overflowed items requestable");
@@ -407,21 +409,25 @@ public class ModuleCrafter extends LogisticsGuiModule implements ICraftItems, IH
     public void setOverflowedAndRequestable(ItemIdentifier item, int stackSize) {
         int readilyAvailable = Math.min(getReadilyAvailiable(item), stackSize);
         int remainingStackSize = stackSize - readilyAvailable;
+        System.out.println("Setting overflowed and requestable " + remainingStackSize + " | " + readilyAvailable);
         UpdateOverflowedItems(item, remainingStackSize);
         UpdateRequestableItems(item, readilyAvailable);
     }
 
     public boolean requestMoreItems() {
         System.out.println("Attempting to request more items");
+        testfunction2();
         boolean thisModuleRequests = false;
         if (!networkHasItemsForCraft()) {
             return false;
         }
-
+        IRouter r = getRouter();
         for (ItemIdentifier key : requestableItems.keySet()) {
-            System.out.println("key: " + key.getFriendlyName() + " | value: " + requestableItems.get(key));
-            int amount = Math.min(maxRequest(key), requestableItems.get(key));
             PipeLogisticsChassi pipe = ((PipeLogisticsChassi) (_service.getRouter().getPipe()));
+            System.out.println("key: " + key.getFriendlyName() + " | value: " + requestableItems.get(key));
+
+            int amount = Math.min(maxRequest(key), requestableItems.get(key));
+
             ItemIdentifierStack newRequest = new ItemIdentifierStack(key, amount);
             IAdditionalTargetInformation info = new ChassiTargetInformation(getPositionInt());
 
@@ -434,6 +440,7 @@ public class ModuleCrafter extends LogisticsGuiModule implements ICraftItems, IH
                 UpdateRequestableItems(key, -1 * amount);
                 System.out.println("Requesting new batch: " + " | " + key.getFriendlyName() + " | " + amount);
                 thisModuleRequests = true;
+                pipe.currentBulkCraftingAmount += amount;
             }
 
         }
@@ -494,10 +501,29 @@ public class ModuleCrafter extends LogisticsGuiModule implements ICraftItems, IH
 
     public void UpdateRequestableItems(ItemIdentifierStack stack) {
         UpdateRequestableItems(stack.getItem(), stack.getStackSize());
+        loopFunction();
+    }
+
+    public void loopFunction() {
+        System.out.println("Loop function running");
+        for (ItemIdentifier key : requestableItems.keySet()) {
+            System.out.println("key: " + key.getFriendlyName() + " | value: " + requestableItems.get(key));
+        }
+        for (Map.Entry<ItemIdentifier, Integer> entry : requestableItems.entrySet()) {
+            ItemIdentifier key = entry.getKey();
+            Integer value = entry.getValue();
+            System.out.println("Key: " + key + ", Value: " + value);
+        }
+    }
+
+    public void testfunc(ItemIdentifier stack, int stackSize) {
+        requestableItems2.put(stack, stackSize);
+        loopFunction();
     }
 
     public void UpdateRequestableItems(ItemIdentifier stack, int stackSize) {
         int oldAmount = getRequestableItemCount(stack);
+        System.out.println("Stack: " + stack.getFriendlyName() + " | amount: " + stackSize);
         setRequestableItems(stack, oldAmount + stackSize);
     }
 
@@ -1652,14 +1678,29 @@ public class ModuleCrafter extends LogisticsGuiModule implements ICraftItems, IH
                 PipeLogisticsChassi pipe = ((PipeLogisticsChassi) (_service.getRouter().getPipe()));
 
                 pipe.currentCraftingAmount -= numtosend;
+                pipe.currentBulkCraftingAmount -= numtosend;
 
-                System.out.println("C amount: " + pipe.currentCraftingAmount + " | " + extracted.stackSize);
-                if (!requestMoreItems() && pipe.currentCraftingAmount == 0) {
-                    System.out.println("Requesting overflowed items");
-                    pipe.requestModulesOverflowedItems();
+                System.out.println("extracted size" + extracted.stackSize + " | " + numtosend);
+
+                System.out.println("C amount: " + pipe.currentCraftingAmount + " | " + pipe.currentBulkCraftingAmount);
+                System.out.println("Crafting module: " + pipe.usingCraftingModuleSlot);
+
+                ModuleCrafter craftingModule = ((ModuleCrafter) pipe.getModules()
+                        .getModule(pipe.usingCraftingModuleSlot));
+
+                boolean shouldRequestWhenAvaliable = true; // True: request items whenever space is avaliable
+
+                if (pipe.currentBulkCraftingAmount == 0 || shouldRequestWhenAvaliable) {
+                    if (!craftingModule.requestMoreItems() && pipe.currentCraftingAmount == 0) {
+                        pipe.requestModulesOverflowedItems();
+                    }
                 }
             }
         }
+    }
+
+    public void testfunction2() {
+        System.out.println("Function 2 " + getCraftedItem().getFriendlyName());
     }
 
     private boolean doesExtractionMatch(LogisticsItemOrder nextOrder, ItemIdentifier extractedID) {

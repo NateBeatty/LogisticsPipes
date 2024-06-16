@@ -22,7 +22,6 @@ import logisticspipes.routing.order.IOrderInfoProvider;
 import logisticspipes.routing.order.IOrderInfoProvider.ResourceType;
 import logisticspipes.routing.order.LinkedLogisticsOrderList;
 import logisticspipes.routing.order.LogisticsOrderManager;
-import logisticspipes.utils.item.ItemIdentifierStack;
 import logisticspipes.utils.tuples.Pair;
 import lombok.Getter;
 
@@ -212,7 +211,7 @@ public class RequestTreeNode {
 
     private void handleCraftingModule(IOrderInfoProvider result) {
         int moduleSlot = ((ModuleCrafter.CraftingChassieInformation) info).getModuleSlot();
-        System.out.println("IS CRAFTING REQUEST!");
+        System.out.println("IS CRAFTING REQUEST in slot: " + moduleSlot);
         IRouter r = SimpleServiceLocator.routerManager.getRouter(result.getRouterId());
 
         String itemName = result.getAsDisplayItem().getFriendlyName();
@@ -230,17 +229,22 @@ public class RequestTreeNode {
                     Math.min(maxRequest, stackSize),
                     r.getPipe().getRouterId());
 
+            ((PipeLogisticsChassi) r.getPipe()).usingCraftingModuleSlot = moduleSlot;
+
+            ((PipeLogisticsChassi) r.getPipe()).currentBulkCraftingAmount = stackSize;
+            ((PipeLogisticsChassi) r.getPipe()).currentCraftingAmount = stackSize;
+
             if (stackSize > maxRequest) {
+                ((PipeLogisticsChassi) r.getPipe()).currentBulkCraftingAmount = maxRequest;
                 int remainingStackSize = stackSize - maxRequest;
                 System.out.println("Setting result stack size to: " + maxRequest);
                 result.getAsDisplayItem().setStackSize(maxRequest);
 
                 System.out.println("Remaining Stack: " + remainingStackSize);
-                ItemIdentifierStack remainingStack = new ItemIdentifierStack(
-                        result.getAsDisplayItem().getItem(),
-                        remainingStackSize);
 
-                craftingModule.setOverflowedAndRequestable(result.getAsDisplayItem().getItem(), remainingStackSize);
+                // craftingModule.setOverflowedAndRequestable(result.getAsDisplayItem().getItem(), remainingStackSize);
+                craftingModule.UpdateRequestableItems(result.getAsDisplayItem().getItem(), remainingStackSize);
+
                 // craftingModule.itemLost(remainingStack, info);
             }
         }
@@ -280,6 +284,7 @@ public class RequestTreeNode {
                         ((PipeLogisticsChassi) (r).getPipe()).usingCraftingModuleSlot = moduleSlot;
                         handleCraftingModule(result);
                     } else {
+                        System.out.println("ELSE STATEMENT");
                         ModuleCrafter craftingModule = ((ModuleCrafter) ((PipeLogisticsChassi) r.getPipe()).getModules()
                                 .getModule(moduleSlot));
                         craftingModule.UpdateOverflowedItems(result.getAsDisplayItem());
