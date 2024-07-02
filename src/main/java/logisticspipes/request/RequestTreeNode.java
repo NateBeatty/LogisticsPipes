@@ -231,8 +231,8 @@ public class RequestTreeNode {
 
             ((PipeLogisticsChassi) r.getPipe()).usingCraftingModuleSlot = moduleSlot;
 
-            ((PipeLogisticsChassi) r.getPipe()).currentBulkCraftingAmount = stackSize;
-            ((PipeLogisticsChassi) r.getPipe()).currentCraftingAmount = stackSize;
+            ((PipeLogisticsChassi) r.getPipe()).currentBulkCraftingAmount += stackSize;
+            ((PipeLogisticsChassi) r.getPipe()).currentCraftingAmount += stackSize;
 
             if (stackSize > maxRequest) {
                 ((PipeLogisticsChassi) r.getPipe()).currentBulkCraftingAmount = maxRequest;
